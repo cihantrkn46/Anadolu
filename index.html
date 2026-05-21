@@ -422,6 +422,8 @@
         }
         .msg-content li { line-height: 1.5; }
         .msg-content li::marker { color: var(--bakir); }
+        .msg-content p { margin: 0 0 6px 0; }
+        .msg-content p:last-child { margin-bottom: 0; }
 
         .typing-indicator {
             display: none;
@@ -1076,27 +1078,102 @@ function sendMessage() {
 }
 
 // ---- Metin Dönüştürücüler ----
-function renderMarkdown(text) {
-    let safeText = escapeHtml(text);
-    return safeText
-        .replace(/```([\s\S]*?)```/g, (_, code) => `<pre>${code.trim()}</pre>`)
-        .replace(/^### (.+)$/gm, '<h3>$1</h3>')
-        .replace(/^[-•] (.+)$/gm, '<li>$1</li>')
-        .replace(/(<li>.*<\/li>(\n|$))+/g, m => `<ul>${m}</ul>`)
-        .replace(/^\d+\. (.+)$/gm, '<li>$1</li>')
-        .replace(/\*\*(.+?)\*\"/g, '<strong>$1</strong>')
-        .replace(/\*(.+?)\*/g, '<em>$1</em>')
-        .replace(/`([^`]+)`/g, '<code>$1</code>')
-        .replace(/\n/g, '<br>');
+function escapeHtml(text) {
+    if (!text) return '';
+    return text
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#039;');
 }
 
-function escapeHtml(text) {
-    return text.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+function inlineMarkdown(text) {
+    return text
+        .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
+        .replace(/\*(.+?)\*/g, '<em>$1</em>')
+        .replace(/`([^`]+)`/g, '<code>$1</code>');
+}
+
+function renderMarkdown(text) {
+    if (!text) return '';
+    const lines = text.split('\n');
+    const out = [];
+    let inUl = false, inOl = false, inPre = false;
+    let preLines = [];
+
+    const closeLists = () => {
+        if (inUl) { out.push('</ul>'); inUl = false; }
+        if (inOl) { out.push('</ol>'); inOl = false; }
+    };
+
+    for (let raw of lines) {
+        // Kod blokları
+        if (raw.trim().startsWith('```')) {
+            if (inPre) {
+                out.push(`<<pre>${escapeHtml(preLines.join('\n').trim())}</pre>`);
+                preLines = [];
+                inPre = false;
+            } else {
+                closeLists();
+                inPre = true;
+            }
+            continue;
+        }
+
+        if (inPre) {
+            preLines.push(raw);
+            continue;
+        }
+
+        // Boş satır
+        if (raw.trim() === '') {
+            closeLists();
+            continue;
+        }
+
+        // Başlıklar
+        const h3Match = raw.match(/^### (.+)$/);
+        if (h3Match) {
+            closeLists();
+            out.push(`<<h3>${escapeHtml(h3Match[1])}</h3>`);
+            continue;
+        }
+
+        // Sırasız liste
+        const ulMatch = raw.match(/^[-•] (.+)$/);
+        if (ulMatch) {
+            if (inOl) { out.push('</ol>'); inOl = false; }
+            if (!inUl) { out.push('<ul>'); inUl = true; }
+            out.push(`<<li>${inlineMarkdown(ulMatch[1])}</li>`);
+            continue;
+        }
+
+        // Sıralı liste
+        const olMatch = raw.match(/^\d+\. (.+)$/);
+        if (olMatch) {
+            if (inUl) { out.push('</ul>'); inUl = false; }
+            if (!inOl) { out.push('<ol>'); inOl = true; }
+            out.push(`<<li>${inlineMarkdown(olMatch[1])}</li>`);
+            continue;
+        }
+
+        // Normal paragraf
+        closeLists();
+        out.push(`<<p>${inlineMarkdown(raw)}</p>`);
+    }
+
+    closeLists();
+    if (inPre) {
+        out.push(`<<pre>${escapeHtml(preLines.join('\n').trim())}</pre>`);
+    }
+
+    return out.join('');
 }
 
 // ---- Yardımcı Fonksiyonlar ----
 function sendChip(btn) {
-    const text = btn.textContent.replace(/^[^\w\s]+\s/, '').trim(); 
+    const text = btn.textContent.replace(/^\S+\s+/, '').trim();
     userInput.value = text;
     sendMessage();
 }
@@ -1153,7 +1230,7 @@ Gerektiğinde başlık (###), madde işareti (-) kullanabilirsin.`;
         generationConfig: { temperature: 0.85, maxOutputTokens: 1024 }
     };
 
-    const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:streamGenerateContent?alt=sse&key=${apiKey}`;
+    const url = `https://generativelanguage.googleapis.com/v1/models/${model}:streamGenerateContent?alt=sse&key=${apiKey}`;
 
     // Arayüz Ayarları
     typingIndicator.style.display = 'flex';
@@ -1181,7 +1258,7 @@ Gerektiğinde başlık (###), madde işareti (-) kullanabilirsin.`;
     typingIndicator.style.display = 'none';
 
     const contentEl = aiMsg.querySelector('#streamContent');
-    contentEl.id = '';
+    contentEl.removeAttribute('id');
 
     const cursor = document.createElement('span');
     cursor.className = 'streaming-cursor';
@@ -1211,26 +1288,32 @@ Gerektiğinde başlık (###), madde işareti (-) kullanabilirsin.`;
             if (done) break;
 
             buffer += decoder.decode(value, { stream: true });
-            const chunks = buffer.split('\n\n'); 
-            buffer = chunks.pop(); 
+            const lines = buffer.split('\n');
+            buffer = lines.pop();
 
-            for (const chunkStr of chunks) {
-                const line = chunkStr.replace(/^data: /, '').trim();
-                if (!line || line === '[DONE]') continue;
+            for (const rawLine of lines) {
+                const line = rawLine.trim();
+                if (!line.startsWith('data:')) continue;
+
+                const jsonText = line.replace(/^data:\s*/, '');
+                if (!jsonText || jsonText === '[DONE]') continue;
 
                 try {
-                    const chunkData = JSON.parse(line);
+                    const chunkData = JSON.parse(jsonText);
                     const part = chunkData?.candidates?.[0]?.content?.parts?.[0]?.text || '';
+
                     if (part) {
                         fullText += part;
                         contentEl.innerHTML = renderMarkdown(fullText);
                         contentEl.appendChild(cursor);
                         scrollToBottom();
                     }
-                } catch (e) {}
+                } catch (err) {
+                    console.warn('JSON parse hatası:', err);
+                }
             }
         }
-        
+
         cursor.remove();
         contentEl.innerHTML = renderMarkdown(fullText);
         conversationHistory.push({ role: 'model', parts: [{ text: fullText }] });
