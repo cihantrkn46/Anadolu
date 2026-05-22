@@ -1,0 +1,12 @@
+{
+  "name": "Anadolu ai",
+  "short_name": "Anadolu",
+  "start_url": "./index.html",
+  "display": "standalone",
+  "background_color": "#0c0907",
+  "theme_color": "#0c0907",
+  "icons": [
+    { "src": "icon.png", "sizes": "192x192 512x512 1024x1024", "type": "image/png", "purpose": "any maskable" }
+  ],
+  "id": "anadolu-ai-pwa"
+}
