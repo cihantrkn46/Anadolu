@@ -1,0 +1,8 @@
+name = "anadolu-gemini-proxy"
+main = "gemini-proxy.js"
+compatibility_date = "2024-11-01"
+
+# wrangler secret put GEMINI_API_KEY
+
+[vars]
+# GEMINI_API_KEY = "secret üzerinden verilir"

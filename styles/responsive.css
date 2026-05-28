@@ -1,0 +1,219 @@
+/* ===== MOBİL / TABLET / LANDSCAPE — tüm cihazlar ===== */
+
+html {
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
+}
+
+body {
+  min-height: 100vh;
+  min-height: 100dvh;
+  min-height: -webkit-fill-available;
+}
+
+.app {
+  width: 100%;
+  max-width: 100vw;
+  min-height: 0;
+  height: 100vh;
+  height: 100dvh;
+  height: -webkit-fill-available;
+}
+
+@supports (height: 100svh) {
+  .app {
+    height: 100svh;
+  }
+}
+
+.chat-area {
+  flex: 1 1 auto;
+  min-height: 0;
+  padding: 10px 10px 8px;
+  padding-left: max(10px, env(safe-area-inset-left));
+  padding-right: max(10px, env(safe-area-inset-right));
+}
+
+.chat-wrapper {
+  min-height: 0;
+}
+
+.chat-wrapper > .typing-indicator {
+  margin-left: max(12px, env(safe-area-inset-left));
+  margin-right: max(12px, env(safe-area-inset-right));
+}
+
+.bottom-section {
+  padding-bottom: max(8px, env(safe-area-inset-bottom));
+}
+
+body.keyboard-open .bottom-section {
+  padding-bottom: max(8px, env(safe-area-inset-bottom));
+}
+
+body.keyboard-open .pwa-banner {
+  display: none !important;
+}
+
+/* Textarea: attach + mic alanı */
+.input-wrapper textarea {
+  padding-right: 88px;
+  font-size: max(16px, 0.92rem); /* iOS zoom önleme */
+}
+
+.word-count {
+  right: 92px;
+  bottom: 12px;
+}
+
+.toast {
+  bottom: max(24px, calc(12px + env(safe-area-inset-bottom)));
+}
+
+.pwa-banner {
+  bottom: max(12px, env(safe-area-inset-bottom));
+}
+
+/* Dokunma hedefleri */
+button,
+.chip,
+.dyn-chip,
+.hdr-btn,
+.theme-toggle-btn,
+.tts-btn,
+.tefekkur-btn,
+.send-btn,
+.modal-save-btn,
+.modal-cancel-btn,
+.pwa-install-btn {
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* Header — dar ekran */
+@media (max-width: 420px) {
+  .header-row {
+    gap: 4px;
+    padding: 8px 0 6px;
+  }
+
+  .brand-sub {
+    display: none;
+  }
+
+  .ai-orb {
+    width: 38px;
+    height: 38px;
+  }
+
+  .brand-title {
+    font-size: 0.95rem;
+    letter-spacing: 1px;
+  }
+
+  .hdr-btn,
+  .theme-toggle-btn,
+  .tts-btn,
+  .tefekkur-btn {
+    min-width: 40px;
+    min-height: 40px;
+    padding: 8px;
+  }
+
+  .hdr-btn svg,
+  .theme-toggle-btn svg,
+  .tts-btn svg,
+  .tefekkur-btn svg {
+    width: 18px;
+    height: 18px;
+  }
+}
+
+@media (max-width: 340px) {
+  .header-actions {
+    gap: 0;
+  }
+
+  .model-badge {
+    display: none;
+  }
+
+  .assistant-container {
+    display: none;
+  }
+
+  .input-area {
+    gap: 6px;
+  }
+}
+
+/* Landscape kısa ekran */
+@media (max-height: 500px) and (orientation: landscape) {
+  .welcome {
+    display: none !important;
+  }
+
+  .assistant-container {
+    display: none;
+  }
+
+  .header-ornament {
+    display: none;
+  }
+
+  .status-strip {
+    padding-bottom: 4px;
+  }
+
+  .chat-area {
+    padding-top: 6px;
+  }
+}
+
+/* Çok küçük yükseklik */
+@media (max-height: 600px) {
+  .welcome-emblem-wrap {
+    width: 56px;
+    height: 56px;
+  }
+
+  .welcome {
+    gap: 10px;
+  }
+
+  .assistant-svg {
+    width: 52px;
+    height: 52px;
+  }
+}
+
+/* Büyük telefon / tablet */
+@media (min-width: 560px) {
+  .toast {
+    bottom: 28px;
+  }
+}
+
+/* Modal küçük ekran */
+@media (max-height: 700px) {
+  .modal {
+    max-height: 85dvh;
+    padding: 18px 16px;
+  }
+}
+
+/* Mesajlar taşmasın */
+.message {
+  max-width: min(92%, 100%);
+  overflow-wrap: anywhere;
+  word-break: break-word;
+}
+
+.msg-content pre {
+  max-width: 100%;
+}
+
+/* Scroll FAB klavye üstü */
+.scroll-fab {
+  bottom: max(12px, env(safe-area-inset-bottom));
+}

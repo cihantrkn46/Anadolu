@@ -1,0 +1,11 @@
+{
+  "name": "anadolu-ai",
+  "version": "2.1.2",
+  "private": true,
+  "description": "Anadolu ai — PWA sohbet asistanı",
+  "scripts": {
+    "start": "python3 -m http.server 8080",
+    "test": "node scripts/smoke-test.mjs",
+    "deploy:worker": "cd worker && wrangler deploy"
+  }
+}
